@@ -1,7 +1,7 @@
 from twelvedata import TDClient
 
 # api initiate
-td = TDClient(apikey="6963c70f85ea4721a62af79975aedc12")
+td = TDClient(apikey="demo")
 
 # symbol: stock symbol
 # interval: interval between datapoints
