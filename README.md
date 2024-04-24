@@ -25,6 +25,6 @@
 - ## Model Evaluation:
   - Evaluate the model using MSE/RMSE.
   - Compare the model's performance against a baseline model or a simple benchmark.
-  - ## Reporting and Visualization:
+- ## Reporting and Visualization:
   - Present the results of the analysis with visualizations and summary statistics.
   - Insights and recommendations based on the analysis.
