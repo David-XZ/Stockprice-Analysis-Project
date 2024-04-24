@@ -4,7 +4,7 @@
 # Data:
 - ## Data Collection:
   - Gather historical stock price data for a selection of NASDAQ-listed stocks using APIs provided by financial data providers like Alpha Vantage, Finazon, IEX Cloud, and Twelve Data.
-  - ## Data Preprocessing:
+- ## Data Preprocessing:
   - Clean the data by handling missing values, outliers, and formatting issues.
   - Calculate additional features such as moving averages, relative strength index (RSI), and other technical indicators that can be used as inputs for the model.
   - Select features from 101 Alpha.
