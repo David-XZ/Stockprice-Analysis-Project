@@ -1,0 +1,28 @@
+---
+title: "stock analysis model"
+author: "Xiaodong(David)_Zheng"
+date: '2024-05-02'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# load data
+stock_data <- read.csv("../Data Collection/out.csv")
+stock_data <- na.omit(stock_data)
+```
+
+```{r}
+# set up model
+```
+
+```{r}
+# analyze feature importance
+```
+
+```{r}
+# analyze residue w.r.t. time stamp
+```
