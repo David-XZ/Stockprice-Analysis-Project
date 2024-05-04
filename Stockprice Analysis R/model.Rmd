@@ -9,12 +9,12 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(quantmod)
 library(xgboost)
+library(dplyr)
 ```
 
 ```{r}
 # load data collected from twelvedata
 stock_data <- read.csv("../Data Collection/out.csv")
-stock_data <- na.omit(stock_data)
 ```
 
 ```{r}
@@ -42,10 +42,10 @@ stock_data$RSI <- RSI(Cl(stock_data), n = 14)  # 14-day Relative Strength Index
 
 ```{r}
 # Prepare data for modeling
-features <- c("SMA", "RSI")  # Select features
-stock_data <- na.omit(stock_data)  # Remove rows with NA values
-X <- stock_data[, features]  # Independent variables
-y <- Lag(Cl(stock_data), k = -1)  # Lagged dependent variable (next day's closing price)
+stock_data <- na.omit(stock_data)
+X <- stock_data
+
+y <- lead(Cl(stock_data), default = NA)  # Lagged dependent variable (next day's closing price)
 
 # Split data into training and testing sets
 trainSize <- floor(0.8 * nrow(X))
