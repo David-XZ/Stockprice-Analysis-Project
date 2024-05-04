@@ -7,16 +7,52 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(quantmod)
+library(xgboost)
 ```
 
 ```{r}
-# load data
+# load data collected from twelvedata
 stock_data <- read.csv("../Data Collection/out.csv")
 stock_data <- na.omit(stock_data)
 ```
 
 ```{r}
-# set up model
+# alternative way of data collection through r package
+# more testing needed
+getStockData <- function(symbol, startDate, endDate) {
+  stockData <- getSymbols(symbol, src = "yahoo", from = startDate, to = endDate, auto.assign = FALSE)
+  stockData <- Ad(stockData)  # Adjusted close price
+  return(stockData)
+}
+
+stockSymbol <- "AAPL"
+startDate <- "2020-01-01"
+endDate <- "2021-12-31"
+
+# Get historical stock price data
+stockData <- getStockData(stockSymbol, startDate, endDate)
+```
+
+```{r}
+# Feature Engineering: Calculate technical indicators
+stock_data$SMA <- SMA(Cl(stock_data), n = 20)  # 20-day Simple Moving Average
+stock_data$RSI <- RSI(Cl(stock_data), n = 14)  # 14-day Relative Strength Index
+```
+
+```{r}
+# Prepare data for modeling
+features <- c("SMA", "RSI")  # Select features
+stock_data <- na.omit(stock_data)  # Remove rows with NA values
+X <- stock_data[, features]  # Independent variables
+y <- Lag(Cl(stock_data), k = -1)  # Lagged dependent variable (next day's closing price)
+
+# Split data into training and testing sets
+trainSize <- floor(0.8 * nrow(X))
+X_train <- X[1:trainSize, ]
+X_test <- X[(trainSize + 1):nrow(X), ]
+y_train <- y[1:trainSize]
+y_test <- y[(trainSize + 1):nrow(y)]
 ```
 
 ```{r}
