@@ -43,8 +43,7 @@ stock_data$RSI <- RSI(Cl(stock_data), n = 14)  # 14-day Relative Strength Index
 ```{r}
 # Prepare dataset for modeling
 stock_data <- na.omit(stock_data)
-X <- stock_data
-
+X <- stock_data[, 2:ncol(stock_data)]
 y <- lead(Cl(stock_data), default = NA)  # Lagged dependent variable (next day's closing price)
 
 # Split data into training and testing sets
@@ -56,12 +55,25 @@ y_test <- y[(trainSize + 1):length(y)]
 ```
 
 ```{r}
+data_train <- xgb.DMatrix(data = as.matrix(X_train), label = y_train)
+params <- list(
+  objective = "reg:squarederror",
+  eval_metric = "rmse"
+)
 # create model
+xgboost_model <- xgb.train(params = params, data = data_train, nrounds = 100)
+```
 
+```{r}
+# predict test data
+dtest <- xgb.DMatrix(data = as.matrix(X_test))
+y_pred <- predict(xgboost_model, dtest)
 ```
 
 ```{r}
 # analyze feature importance
+importance_matrix <- xgb.importance(model = xgboost_model)
+print(importance_matrix)
 ```
 
 ```{r}
