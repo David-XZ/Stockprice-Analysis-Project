@@ -28,3 +28,6 @@
 - ## Reporting and Visualization:
   - Present the results of the analysis with visualizations and summary statistics.
   - Insights and recommendations based on the analysis.
+
+Presentation Link:
+https://docs.google.com/presentation/d/1twkjcJKuTnmBbOEmEYIsMV9dRcCnXY_7nl-0LfLVNbc/edit?usp=sharing
