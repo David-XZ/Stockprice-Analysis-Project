@@ -11,7 +11,7 @@ td = TDClient(apikey=key)
 # - symbol: stock symbol
 # - interval: interval between datapoints
 # - outputsize: n most recent datapoints
-ts = td.time_series(symbol="AAPL", interval="1day", outputsize=30).with_macd().with_ema().as_pandas()
+ts = td.time_series(symbol="AAPL", interval="1day", outputsize=1000).with_macd().with_ema().as_pandas()
 
 # output stock data as csv
 ts.to_csv('out.csv', index=True)

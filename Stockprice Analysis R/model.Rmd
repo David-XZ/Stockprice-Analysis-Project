@@ -41,7 +41,7 @@ stock_data$RSI <- RSI(Cl(stock_data), n = 14)  # 14-day Relative Strength Index
 ```
 
 ```{r}
-# Prepare data for modeling
+# Prepare dataset for modeling
 stock_data <- na.omit(stock_data)
 X <- stock_data
 
@@ -52,7 +52,12 @@ trainSize <- floor(0.8 * nrow(X))
 X_train <- X[1:trainSize, ]
 X_test <- X[(trainSize + 1):nrow(X), ]
 y_train <- y[1:trainSize]
-y_test <- y[(trainSize + 1):nrow(y)]
+y_test <- y[(trainSize + 1):length(y)]
+```
+
+```{r}
+# create model
+
 ```
 
 ```{r}
