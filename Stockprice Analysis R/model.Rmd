@@ -1,7 +1,7 @@
 ---
-title: "stock analysis model"
-author: "Xiaodong(David)_Zheng"
-date: '2024-05-02'
+title: "Analyzing Stock Price Prediction with a Focus on Timeliness"
+author: "Xiaodong(David) Zheng  ｜  Yuxi Chai"
+date: '2024-05-06'
 output: html_document
 ---
 
@@ -10,36 +10,36 @@ knitr::opts_chunk$set(echo = TRUE)
 library(quantmod)
 library(xgboost)
 library(dplyr)
+library(SHAPforxgboost)
 ```
+<u>**Problem Definition:**</u>\
+The ability to predict stock prices is a challenging yet profitable task in the financial markets. With the increasing availability of financial data and the advancements in machine learning techniques, there has been a growing interest in implementing sophisticated models for stock price prediction. In this project, I plan to explore various aspects of model setup, including data preprocessing, feature creation and selection, and model selection.\
 
+<u>**Proposed Idea:**</u>\
+- Collect stock price data from online archive sources.\
+- Feature engineering.\
+- Predict stock price by modeling Closing Price w.r.t. all the feature data from the previous day.\
+- Analyze feature importance.\
+- Analyze model residue.\
+
+<u>**Experiment:**</u>\
+<u>*Data Collection:*</u>\
+Stock price and volume data gathered from API through twelvedata, yahoo finance. Data type includes Open price, Close price, High price, Low price, Trading Volume, MACD (Moving Average Convergence/Divergence), EMA (Exponential Moving Average).\
 ```{r}
 # load data collected from twelvedata
 stock_data <- read.csv("../Data Collection/out.csv")
 ```
 
-```{r}
-# alternative way of data collection through r package
-# more testing needed
-getStockData <- function(symbol, startDate, endDate) {
-  stockData <- getSymbols(symbol, src = "yahoo", from = startDate, to = endDate, auto.assign = FALSE)
-  stockData <- Ad(stockData)  # Adjusted close price
-  return(stockData)
-}
-
-stockSymbol <- "AAPL"
-startDate <- "2020-01-01"
-endDate <- "2021-12-31"
-
-# Get historical stock price data
-stockData <- getStockData(stockSymbol, startDate, endDate)
-```
-
+<u>*Additional Feature Engineering:*</u>\
+Two additional feature is calculated from the price data, SMA (simple moving average) and RSI (Relative Strength Index).\
 ```{r}
 # Feature Engineering: Calculate technical indicators
 stock_data$SMA <- SMA(Cl(stock_data), n = 20)  # 20-day Simple Moving Average
 stock_data$RSI <- RSI(Cl(stock_data), n = 14)  # 14-day Relative Strength Index
 ```
 
+<u>*Setup Model:*</u>\
+We choose to setup the prediction using XGBoost (Extreme Gradient Boosting). XGBoost is efficient with large datasets due to its parallel and distributed computing capabilities. Although in this particular project the size of the dataset is manageable, in real world scenario the dataset would be massive. Another reason is that XGBoost performs well with datasets that have a large number of features, making it suitable for our application with many predictors. Finally XGBooost provides feature importance scores, which can help us in feature selection and understanding the importance of different features in the model.
 ```{r}
 # Prepare dataset for modeling
 stock_data <- na.omit(stock_data)
@@ -52,30 +52,31 @@ X_train <- X[1:trainSize, ]
 X_test <- X[(trainSize + 1):nrow(X), ]
 y_train <- y[1:trainSize]
 y_test <- y[(trainSize + 1):length(y)]
-```
 
-```{r}
+# Create model
 data_train <- xgb.DMatrix(data = as.matrix(X_train), label = y_train)
 params <- list(
   objective = "reg:squarederror",
   eval_metric = "rmse"
 )
-# create model
+
 xgboost_model <- xgb.train(params = params, data = data_train, nrounds = 100)
 ```
 
+<u>*Feature Importance Analysis:*</u>\
+Through feature analysis, we can see that, quite intuitively, the Open Price plays the most important role in predicting the Closing Price for next day. This can be explained since the change in stock price in one day is, in most cases, not drastic. Same idea applies to the High Price and Low Price. Interstingly We see that EMA and Trading Volume also play a significant role in the prediction.
+```{r}
+# Calculate and visualize SHAP score for each feature
+shap_values <- shap.values(xgb_model = xgboost_model, X_train = as.matrix(X_train))
+shap.plot.summary.wrap2(shap_values$shap_score, as.matrix(X_train))
+```
+
+<u>*Residue Analysis:*</u>\
+Analyzing the prediction using MAE (mean absolute error).
 ```{r}
 # predict test data
 dtest <- xgb.DMatrix(data = as.matrix(X_test))
 y_pred <- predict(xgboost_model, dtest)
-```
-
-```{r}
-# analyze feature importance
-importance_matrix <- xgb.importance(model = xgboost_model)
-print(importance_matrix)
-```
-
-```{r}
-# analyze residue w.r.t. time stamp
+mae <- mean(na.omit(abs(y_pred - y_test)))
+cat("This XGBoost model yields an MAE of:", mae)
 ```
