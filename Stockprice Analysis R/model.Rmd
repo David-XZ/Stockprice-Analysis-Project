@@ -11,27 +11,28 @@ library(quantmod)
 library(xgboost)
 library(dplyr)
 library(SHAPforxgboost)
+library(iml)
 ```
 <u>**Problem Definition:**</u>\
-The ability to predict stock prices is a challenging yet profitable task in the financial markets. With the increasing availability of financial data and the advancements in machine learning techniques, there has been a growing interest in implementing sophisticated models for stock price prediction. In this project, I plan to explore various aspects of model setup, including data preprocessing, feature creation and selection, and model selection.\
+The ability to predict stock prices is a complex yet profitable task in the financial markets. With the increasing availability of financial data and the advancements in machine learning techniques, there has been a growing interest in implementing sophisticated models for stock price prediction. However, implementing said prediction comes with great challenges due to the dynamic nature of financial markets. This project aims to explore various aspects of stock price prediction model, including data pre-processing, feature creation and selection, and model selection, with a focus on how time dynamics affect the predictions.\
 
 <u>**Proposed Idea:**</u>\
 - Collect stock price data from online archive sources.\
-- Feature engineering.\
-- Predict stock price by modeling Closing Price w.r.t. all the feature data from the previous day.\
-- Analyze feature importance.\
-- Analyze model residue.\
+- Feature engineering. Calculate additional two predictors, SMA and RSI, based on collected stock data.\
+- Predict stock price by modeling Closing Price againest all the predictor data from the previous day.\
+- Analyze feature importance to identify which input variables (features) have the most influence on the predictive model's output.\
+- Analyze model residue in a time series manner to evaluate model accuracy and identify any systematic errors in predicting stock price movements.\
 
 <u>**Experiment:**</u>\
 <u>*Data Collection:*</u>\
-Stock price and volume data gathered from API through twelvedata, yahoo finance. Data type includes Open price, Close price, High price, Low price, Trading Volume, MACD (Moving Average Convergence/Divergence), EMA (Exponential Moving Average).\
+We gathered stock price and volume data from API through twelvedata. The collected raw data type includes Open price, Close price, High price, Low price, Trading Volume, MACD (Moving Average Convergence/Divergence), and EMA (Exponential Moving Average), all from Apple stock spamming the previous 1000 days.\
 ```{r}
 # load data collected from twelvedata
 stock_data <- read.csv("../Data Collection/out.csv")
 ```
 
 <u>*Additional Feature Engineering:*</u>\
-Two additional feature is calculated from the price data, SMA (simple moving average) and RSI (Relative Strength Index).\
+Two additional feature is calculated from the price data, SMA (simple moving average) \[ \text{SMA}_t = \frac{X_t + X_{t-1} + X_{t-2} + \ldots + X_{t-n+1}}{n} \] with $X$ being stock price and $n$ being the intended calculation time period, and RSI (Relative Strength Index) \[ \text{RSI} = 100 - \frac{100}{1 + \frac{\text{Average Gain}}{\text{Average Loss}}} \] .\
 ```{r}
 # Feature Engineering: Calculate technical indicators
 stock_data$SMA <- SMA(Cl(stock_data), n = 20)  # 20-day Simple Moving Average
@@ -57,17 +58,18 @@ y_test <- y[(trainSize + 1):length(y)]
 data_train <- xgb.DMatrix(data = as.matrix(X_train), label = y_train)
 params <- list(
   objective = "reg:squarederror",
-  eval_metric = "rmse"
+  eval_metric = "mae"
 )
 
 xgboost_model <- xgb.train(params = params, data = data_train, nrounds = 100)
 ```
 
 <u>*Feature Importance Analysis:*</u>\
-Through feature analysis, we can see that, quite intuitively, the Open Price plays the most important role in predicting the Closing Price for next day. This can be explained since the change in stock price in one day is, in most cases, not drastic. Same idea applies to the High Price and Low Price. Interstingly We see that EMA and Trading Volume also play a significant role in the prediction.
+Through feature analysis, we can see that, quite intuitively, the Open Price plays the most important role in predicting the Closing Price for next day since intuitively this is the baseline for the prediction. Similar idea applies to the High Price, Low Price and previous day Close Price. Interestingly we see that EMA and Trading Volume also play a rather significant role in the prediction.
 ```{r}
 # Calculate and visualize SHAP score for each feature
 shap_values <- shap.values(xgb_model = xgboost_model, X_train = as.matrix(X_train))
+shap_values$mean_shap_score
 shap.plot.summary.wrap2(shap_values$shap_score, as.matrix(X_train))
 ```
 
@@ -79,4 +81,13 @@ dtest <- xgb.DMatrix(data = as.matrix(X_test))
 y_pred <- predict(xgboost_model, dtest)
 mae <- mean(na.omit(abs(y_pred - y_test)))
 cat("This XGBoost model yields an MAE of:", mae)
+```
+We next formed a more detailed residue analysis with a focus on the time dynamics. To achieve this we plot the residue data with respect to the time index. From the graph we can infer two conclusions:\
+- a. There seems to be oscillation happening in the residue data. This could induce further research into ways to isolate the oscillations into s combination of a varieties of trend or seasonality, thus allowing the model to make more accurate predictions.\
+- b. The prediction accuracy does seems to degrade significantly as time reaches a certain point, in this case around the 75 days mark. It would be interesting to expand and repeat the experiment on data from different stocks and see how each performs.
+```{r}
+# Plot residuals over time
+residuals <- y_test - y_pred
+plot(residuals, type = "h", col = "blue", main = "Residuals", xlab = "Time Index", ylab = "Residuals")
+abline(h = 0, col = "red")  # Add a baseline at zero to highlight errors
 ```
