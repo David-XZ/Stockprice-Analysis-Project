@@ -91,3 +91,5 @@ residuals <- y_test - y_pred
 plot(residuals, type = "h", col = "blue", main = "Residuals", xlab = "Time Index", ylab = "Residuals")
 abline(h = 0, col = "red")  # Add a baseline at zero to highlight errors
 ```
+
+Additional code and dataset can be found on https://github.com/David-XZ/Stockprice-Analysis-Project.git
